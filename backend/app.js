@@ -8,6 +8,7 @@ const session = require("express-session");
 
 // import files
 const indexRouter = require("./routes/index");
+const db = require("./config/database");
 
 // configs
 dotenv.config();
@@ -46,6 +47,6 @@ app.use((err, req, res, next) => {
 });
 
 // run app
-app.listen(app.get("port"), (req, res) => {
+app.listen(app.get("port"), async (req, res) => {
   console.log(`Server Running at PORT ${app.get("port")}...`);
 });
