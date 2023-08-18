@@ -2,13 +2,12 @@
 const express = require("express");
 const morgan = require("morgan");
 const dotenv = require("dotenv");
-const path = require("path");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const cors = require("cors");
 
 // import files
-const indexRouter = require("./routes/index");
-const db = require("./config/database");
+const todoRouter = require("./routes/todo");
 
 // configs
 dotenv.config();
@@ -33,9 +32,10 @@ app.use(session({
     secure: false
   }
 }));
+app.use(cors());
 
 // routers
-app.use("/", indexRouter);
+app.use("/", todoRouter);
 
 // error handling routers
 app.use((req, res) => {
