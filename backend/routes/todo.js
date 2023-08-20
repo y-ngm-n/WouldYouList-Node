@@ -50,5 +50,48 @@ router.post("/todo/new", async (req, res, next) => {
   }
 });
 
+router.put("/todo/:id", async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const todo = req.body;
+    const query = "update todo set planDate=?, todoName=?, category=?, todoContent=? where id=?;";
+    await db.query(query, [todo.planDate, todo.todoName, todo.category, todo.todoContent, id]);
+    res.status(200).json({ id, user: "?" });
+  } catch(err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.put("/todo/:id/toggle", async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const selectQuery = "select * from todo where id=?;";
+    const result = await db.query(selectQuery, [id]);
+    const state = parseInt(result[0][0].state.toString("hex"));
+    let newState;
+    if (state) newState = 0;
+    else newState = 1;
+    const updateQuery = "update todo set state=? where id=?;";
+    await db.query(updateQuery, [newState, id]);
+    res.status(200).json({ id, user: "?" });
+  } catch(err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.delete("/todo/:id", async (req, res, next) => {
+  try {
+    const id = parseInt(req.params.id);
+    const query = "delete from todo where id=?;";
+    await db.query(query, [id]);
+    res.status(200).json({ id });
+  } catch(err) {
+    console.error(err);
+    next(err);
+  }
+});
+
 
 module.exports = router;
