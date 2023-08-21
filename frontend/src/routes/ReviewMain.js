@@ -34,7 +34,7 @@ const ReviewMain = () => {
           {reviews.map((review) => (
             // 각각의 Card를 클릭하면, ShowReview로 이동
             <Card
-              key={review.todo.id}
+              key={review.todoId}
               onClick={() => {
                 navigate(`/review/${review.id}`);
               }}

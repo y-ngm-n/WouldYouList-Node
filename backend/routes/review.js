@@ -25,6 +25,7 @@ const reviewUpload = upload.fields([
   { name: "todoId" },
   { name: "file" }
 ]);
+const url = "http://localhost:8080/image";
 
 router.get("/", async (req, res, next) => {
   try {
@@ -52,15 +53,22 @@ router.get("/", async (req, res, next) => {
 
 router.post("/new", reviewUpload, async (req, res, next) => {
   try {
-    console.log(req.body);
-    console.log(req.body.file);
-    // const { title, review, place, doneDate, expression, todoId, file } = req.body;
-    // const fileQuery = "insert into upload_file(full_path, original_file_name) value(?, ?);";
-    // const filePath = 
-    // const fileResult = await db.query(fileQuery, []);
-    // const reviewQuery = "insert into review(done_date, expression, place, review_content, review_photo_id, ) value();"
+    const { title, review, place, doneDate, expression, todoId } = req.body;
+    const fileName = req.files.file[0].filename;
+    const filePath = `${url}/${fileName}`;
+    const fileQuery = "insert into upload_file(full_path, original_file_name) value(?, ?);";
+    const fileResult = await db.query(fileQuery, [filePath, fileName]);
+    const fileId = fileResult[0].insertId;
+
+    const reviewQuery = "insert into review(done_date, expression, place, review_content, review_photo_id, review_title, todoId) value(?, ?, ?, ?, ?, ?, ?);";
+    const reviewResult = await db.query(reviewQuery, [doneDate, expression, place, review, fileId, title, todoId]);
+    const reviewId = reviewResult[0].insertId;
+
+    const todoQuery = "update todo set reviewId=? where id=?;";
+    await db.query(todoQuery, [reviewId, parseInt(todoId)]);
+    
+    res.status(200).json({ id: reviewId });
   } catch (err) {
-    console.log("asdf");
     console.error(err);
     next(err);
   }
