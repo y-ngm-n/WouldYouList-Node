@@ -4,10 +4,12 @@ const morgan = require("morgan");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const path = require("path");
 const cors = require("cors");
 
 // import files
 const todoRouter = require("./routes/todo");
+const reviewRouter = require("./routes/review");
 
 // configs
 dotenv.config();
@@ -20,6 +22,7 @@ app.set("port", process.env.PORT);
 
 // middlewares
 app.use(morgan(process.env.ENV));
+app.use("/image", express.static(path.join(__dirname, "uploads")));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
@@ -36,6 +39,7 @@ app.use(cors());
 
 // routers
 app.use("/", todoRouter);
+app.use("/review", reviewRouter);
 
 // error handling routers
 app.use((req, res) => {
