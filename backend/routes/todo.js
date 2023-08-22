@@ -1,10 +1,12 @@
+// imports
 const express = require("express");
-
 const db = require("../config/database");
 
-
+// vars
 const router = express.Router();
 
+
+// routers
 router.get("/todo", async (req, res, next) => {
   try {
     const query = "select * from todo where state=0";
@@ -93,5 +95,5 @@ router.delete("/todo/:id", async (req, res, next) => {
   }
 });
 
-
+// exports
 module.exports = router;

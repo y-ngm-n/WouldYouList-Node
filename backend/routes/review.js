@@ -1,9 +1,10 @@
+// imports
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
 const db = require("../config/database");
 
-
+// vars
 const router = express.Router();
 const upload = multer({
   storage: multer.diskStorage({
@@ -29,6 +30,7 @@ const url = "http://localhost:8080/image";
 const defaultImageId = 1;
 
 
+// routers
 router.get("/", async (req, res, next) => {
   try {
     const query = "select review.id, done_date, expression, place, review_content, review_photo_id, review_title, full_path from review, upload_file where review.review_photo_id=upload_file.id;"
@@ -142,4 +144,5 @@ router.delete("/:id", async (req, res, next) => {
 });
 
 
+// exports
 module.exports = router;
