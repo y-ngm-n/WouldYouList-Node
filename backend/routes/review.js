@@ -26,25 +26,31 @@ const reviewUpload = upload.fields([
   { name: "file" }
 ]);
 const url = "http://localhost:8080/image";
+const defaultImageId = 1;
 
 
 router.get("/", async (req, res, next) => {
   try {
-    const result = await db.query("select * from review, upload_file where review.review_photo_id=upload_file.id;");
+    const query = "select review.id, done_date, expression, place, review_content, review_photo_id, review_title, full_path from review, upload_file where review.review_photo_id=upload_file.id;"
+    const result = await db.query(query);
     const datas = result[0];
-    const reviews = datas.map((data) => {
-      return {
-        id: data.id,
-        photoId: data.review_photo_id,
-        reviewPhoto: data.full_path,
-        doneDate: data.done_date,
-        reviewTitle: data.review_title,
-        reviewContent: data.review_content,
-        place: data.place,
-        expression: data.expression,
-        todoId: data.todoId
-      }
-    });
+    const reviews = await Promise.all(
+      datas.map(async (data) => {
+        const result = await db.query("select * from todo where reviewId=?;", [data.id]);
+        const todo = result[0][0];
+        return {
+          id: data.id,
+          photoId: data.review_photo_id,
+          reviewPhoto: data.full_path,
+          doneDate: data.done_date,
+          reviewTitle: data.review_title,
+          reviewContent: data.review_content,
+          place: data.place,
+          expression: data.expression,
+          todo
+        }
+      })
+    );
     res.status(200).json(reviews);
   } catch(err) {
     console.error(err);
@@ -55,11 +61,14 @@ router.get("/", async (req, res, next) => {
 router.post("/new", reviewUpload, async (req, res, next) => {
   try {
     const { title, review, place, doneDate, expression, todoId } = req.body;
-    const fileName = req.files.file[0].filename;
-    const filePath = `${url}/${fileName}`;
-    const fileQuery = "insert into upload_file(full_path, original_file_name) value(?, ?);";
-    const fileResult = await db.query(fileQuery, [filePath, fileName]);
-    const fileId = fileResult[0].insertId;
+    let fileId;
+    if (req.files.file) { 
+      const fileName = req.files.file[0].filename;
+      const filePath = `${url}/${fileName}`;
+      const fileQuery = "insert into upload_file(full_path, original_file_name) value(?, ?);";
+      const fileResult = await db.query(fileQuery, [filePath, fileName]);
+      fileId = fileResult[0].insertId;
+    } else { fileId = defaultImageId; }
 
     const reviewQuery = "insert into review(done_date, expression, place, review_content, review_photo_id, review_title, todoId) value(?, ?, ?, ?, ?, ?, ?);";
     const reviewResult = await db.query(reviewQuery, [doneDate, expression, place, review, fileId, title, todoId]);
@@ -70,6 +79,15 @@ router.post("/new", reviewUpload, async (req, res, next) => {
     
     res.status(200).json({ id: reviewId });
   } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.put("/:id", reviewUpload, (req, res, next) => {
+  try {
+
+  } catch(err) {
     console.error(err);
     next(err);
   }
