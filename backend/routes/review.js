@@ -127,5 +127,19 @@ router.put("/:id", reviewUpload, async (req, res, next) => {
   }
 });
 
+router.delete("/:id", async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    const todoQuery = "update todo set state=0, reviewId=null where reviewId=?;";
+    await db.query(todoQuery, [id]);
+    const reviewQuery = "delete from review where id=?;";
+    await db.query(reviewQuery, [id]);
+    res.status(200).json({ id });
+  } catch(err) {
+    console.error(err);
+    next(err);
+  }
+});
+
 
 module.exports = router;
