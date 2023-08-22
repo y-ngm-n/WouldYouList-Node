@@ -105,14 +105,14 @@ const AddEditReview = () => {
         <CardHeader>
           <Heading size="md" textAlign={"center"}>
             "{data.todo.todoName}"에 대한 멋진 리뷰를 남겨 주세요!
-            {console.log({
+            {/* {console.log({
               title,
               review,
               place,
               expression,
               file,
               inputImage
-            })}
+            })} */}
           </Heading>
         </CardHeader>
 

@@ -27,6 +27,7 @@ const reviewUpload = upload.fields([
 ]);
 const url = "http://localhost:8080/image";
 
+
 router.get("/", async (req, res, next) => {
   try {
     const result = await db.query("select * from review, upload_file where review.review_photo_id=upload_file.id;");
@@ -37,8 +38,8 @@ router.get("/", async (req, res, next) => {
         photoId: data.review_photo_id,
         reviewPhoto: data.full_path,
         doneDate: data.done_date,
-        title: data.review_title,
-        review: data.review_content,
+        reviewTitle: data.review_title,
+        reviewContent: data.review_content,
         place: data.place,
         expression: data.expression,
         todoId: data.todoId

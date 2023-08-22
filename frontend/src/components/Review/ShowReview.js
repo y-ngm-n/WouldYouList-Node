@@ -47,7 +47,7 @@ const ShowReview = () => {
   return (
     <div>
       {reviews.map((review) => (
-        <div ref={reviewCardRef} key={review.todo.id}>
+        <div ref={reviewCardRef} key={review.todoId}>
           <ReviewCard data={review} />
         </div>
       ))}
