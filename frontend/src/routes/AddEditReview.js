@@ -37,17 +37,17 @@ const AddEditReview = () => {
 
   // 리뷰 생성인지 수정인지 구분하는 변수
   // -> 리뷰 추가이면 false, 리뷰 수정이면 true
-  let isEdit = data.title ? true : false;
+  let isEdit = data.reviewTitle ? true : false;
 
   // const [imgSelect, setImgSelect] = useState(false);
-  const [title, setTitle] = useState(data.title);
-  const [review, setReview] = useState(data.review);
+  const [title, setTitle] = useState(data.reviewTitle);
+  const [review, setReview] = useState(data.reviewContent);
   const [place, setPlace] = useState(data.place);
   const [expression, setExpression] = useState(data.expression);
   const [file, setFile] = useState(null);
   // 데이터 속 이미지가 defaultImg와 같으면 inputImage를 null, 아니면 이미지 경로를 넣어줌
   const [inputImage, setInputImage] = useState(
-    data.photo === defaultImg ? null : data.photo
+    data.reviewPhoto === defaultImg ? null : data.reviewPhoto
   );
 
   const tagColors = {
@@ -91,9 +91,11 @@ const AddEditReview = () => {
       await createReview(newReview);
       navigate("/review");
     } else {
-      let state = data.photo !== inputImage;
+      let state;
+      if (data.reviewPhoto === defaultImg) state = false;
+      else state = data.reviewPhoto !== inputImage;
       newReview.append("isDeleted", state);
-      await updateReview(data.todo.id, newReview);
+      await updateReview(data.id, newReview);
       navigate(`/review/${data.id}`);
     }
   };
