@@ -4,6 +4,8 @@ const multer = require("multer");
 const path = require("path");
 const db = require("../config/database");
 
+const Review = require("../models/Review");
+
 // vars
 const router = express.Router();
 const upload = multer({
@@ -33,27 +35,7 @@ const defaultImageId = 1;
 // routers
 router.get("/", async (req, res, next) => {
   try {
-    const query = "select review.id, done_date, expression, place, review_content, review_photo_id, review_title, full_path from review, upload_file where review.review_photo_id=upload_file.id;"
-    const result = await db.query(query);
-    const datas = result[0];
-    const reviews = await Promise.all(
-      datas.map(async (data) => {
-        const result = await db.query("select * from todo where reviewId=?;", [data.id]);
-        const todo = result[0][0];
-        todo.state = parseInt(todo.state.toString("hex"));
-        return {
-          id: data.id,
-          photoId: data.review_photo_id,
-          reviewPhoto: data.full_path,
-          doneDate: data.done_date,
-          reviewTitle: data.review_title,
-          reviewContent: data.review_content,
-          place: data.place,
-          expression: data.expression,
-          todo
-        }
-      })
-    );
+    const reviews = await Review.selectAll();
     res.status(200).json(reviews);
   } catch(err) {
     console.error(err);
@@ -90,15 +72,13 @@ router.post("/new", reviewUpload, async (req, res, next) => {
 router.put("/:id", reviewUpload, async (req, res, next) => {
   try {
     const id = req.params.id;
-    console.log(id);
     const file = req.files.file;
     const { title, review, place, doneDate, expression, todoId } = req.body;
     const isDeleted = JSON.parse(req.body.isDeleted);
 
     // case 1
     if ((file != undefined) && isDeleted) {
-      const result = await db.query("select review_photo_id from review where id=?", [id]);
-      const fileId = result[0][0].review_photo_id;
+      const fileId = await Review.selectPhotoByOne("id", id);
       const fileName = file[0].filename;
       const filePath = `${url}/${fileName}`;
       await db.query("update upload_file set full_path=?, original_file_name=? where id=?;", [filePath, fileName, fileId]);
@@ -113,8 +93,7 @@ router.put("/:id", reviewUpload, async (req, res, next) => {
     }
     // case 3
     else if ((file == undefined) && isDeleted) {
-      const result = await db.query("select review_photo_id from review where id=?", [id]);
-      const fileId = result[0][0].review_photo_id;
+      const fileId = await Review.selectPhotoByOne("id", id);
       await db.query("delete from upload_file where id=?;", [fileId]);
       await db.query("update review set review_photo_id=? where id=?;", [defaultImageId, id]);
     }
