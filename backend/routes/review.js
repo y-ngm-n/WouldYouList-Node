@@ -95,30 +95,30 @@ router.put("/:id", reviewUpload, async (req, res, next) => {
     const { title, review, place, doneDate, expression, todoId } = req.body;
     const isDeleted = JSON.parse(req.body.isDeleted);
 
+    // case 1
     if ((file != undefined) && isDeleted) {
-      // console.log("case 1");
       const result = await db.query("select review_photo_id from review where id=?", [id]);
       const fileId = result[0][0].review_photo_id;
       const fileName = file[0].filename;
       const filePath = `${url}/${fileName}`;
       await db.query("update upload_file set full_path=?, original_file_name=? where id=?;", [filePath, fileName, fileId]);
     }
+    // case 2
     else if ((file != undefined) && !isDeleted) {
-      // console.log("case 2");
       const fileName = file[0].filename;
       const filePath = `${url}/${fileName}`;
       const result = await db.query("insert into upload_file(full_path, original_file_name) value(?, ?);", [filePath, fileName]);
       const fileId = result[0].insertId;
       await db.query("update review set review_photo_id=? where id=?;", [fileId, id]);
     }
+    // case 3
     else if ((file == undefined) && isDeleted) {
-      // console.log("case 3");
       const result = await db.query("select review_photo_id from review where id=?", [id]);
       const fileId = result[0][0].review_photo_id;
       await db.query("delete from upload_file where id=?;", [fileId]);
       await db.query("update review set review_photo_id=? where id=?;", [defaultImageId, id]);
     }
-    // else if ((file == undefined) && !isDeleted) console.log("case 4");
+    // case 4: 아무것도 안함
 
     const reviewQuery = "update review set done_date=?, expression=?, place=?, review_content=?, review_title=? where id=?;";
     await db.query(reviewQuery, [doneDate, expression, place, review, title, id]);
