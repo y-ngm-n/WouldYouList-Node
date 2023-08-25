@@ -2,7 +2,6 @@
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
-const db = require("../config/database");
 
 const Todo = require("../models/Todo");
 const Review = require("../models/Review");
