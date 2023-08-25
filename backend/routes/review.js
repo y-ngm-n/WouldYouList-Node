@@ -4,7 +4,9 @@ const multer = require("multer");
 const path = require("path");
 const db = require("../config/database");
 
+const Todo = require("../models/Todo");
 const Review = require("../models/Review");
+const Image = require("../models/Image");
 
 // vars
 const router = express.Router();
@@ -45,23 +47,20 @@ router.get("/", async (req, res, next) => {
 
 router.post("/new", reviewUpload, async (req, res, next) => {
   try {
-    const { title, review, place, doneDate, expression, todoId } = req.body;
+    const review = req.body;
+
     let fileId;
-    if (req.files.file) { 
+    if (req.files.file) {
       const fileName = req.files.file[0].filename;
       const filePath = `${url}/${fileName}`;
-      const fileQuery = "insert into upload_file(full_path, original_file_name) value(?, ?);";
-      const fileResult = await db.query(fileQuery, [filePath, fileName]);
-      fileId = fileResult[0].insertId;
+      fileId = await Image.insert({ fileName, filePath});
     } else { fileId = defaultImageId; }
+    review.fileId = fileId;
 
-    const reviewQuery = "insert into review(done_date, expression, place, review_content, review_photo_id, review_title) value(?, ?, ?, ?, ?, ?);";
-    const reviewResult = await db.query(reviewQuery, [doneDate, expression, place, review, fileId, title]);
-    const reviewId = reviewResult[0].insertId;
+    const reviewId = await Review.insert(review);
 
-    const todoQuery = "update todo set reviewId=? where id=?;";
-    await db.query(todoQuery, [reviewId, parseInt(todoId)]);
-    
+    await Todo.updateReviewByOne("id", parseInt(review.todoId), reviewId);
+
     res.status(200).json({ id: reviewId });
   } catch (err) {
     console.error(err);
@@ -73,35 +72,34 @@ router.put("/:id", reviewUpload, async (req, res, next) => {
   try {
     const id = req.params.id;
     const file = req.files.file;
-    const { title, review, place, doneDate, expression, todoId } = req.body;
+    const review = req.body;
     const isDeleted = JSON.parse(req.body.isDeleted);
 
-    // case 1
+    // case 1: 기존 사진 교체
     if ((file != undefined) && isDeleted) {
       const fileId = await Review.selectPhotoByOne("id", id);
       const fileName = file[0].filename;
       const filePath = `${url}/${fileName}`;
-      await db.query("update upload_file set full_path=?, original_file_name=? where id=?;", [filePath, fileName, fileId]);
+      await Image.updateByOne("id", fileId, { fileName, filePath});
     }
-    // case 2
+    // case 2: 기본이미지에서 사진 추가
     else if ((file != undefined) && !isDeleted) {
       const fileName = file[0].filename;
       const filePath = `${url}/${fileName}`;
-      const result = await db.query("insert into upload_file(full_path, original_file_name) value(?, ?);", [filePath, fileName]);
-      const fileId = result[0].insertId;
-      await db.query("update review set review_photo_id=? where id=?;", [fileId, id]);
+      const fileId = await Image.insert({ fileName, filePath });
+      await Review.updatePhotoByOne("id", id, fileId);
     }
-    // case 3
+    // case 3: 기존 사진 삭제, 기본이미지로 변경
     else if ((file == undefined) && isDeleted) {
       const fileId = await Review.selectPhotoByOne("id", id);
-      await db.query("delete from upload_file where id=?;", [fileId]);
-      await db.query("update review set review_photo_id=? where id=?;", [defaultImageId, id]);
+      await Image.deleteByOne("id", fileId);
+      await Review.updatePhotoByOne("id", id, defaultImageId);
     }
-    // case 4: 아무것도 안함
+    // case 4: 기존 사진 유지 OR 기본이미지 유지
+    // -> 아무 처리 없음
 
-    const reviewQuery = "update review set done_date=?, expression=?, place=?, review_content=?, review_title=? where id=?;";
-    await db.query(reviewQuery, [doneDate, expression, place, review, title, id]);
-    res.status(200).json({ id, title });
+    await Review.updateContentByOne("id", id, review);
+    res.status(200).json({ id, title: review.title });
   } catch(err) {
     console.error(err);
     next(err);
@@ -110,11 +108,9 @@ router.put("/:id", reviewUpload, async (req, res, next) => {
 
 router.delete("/:id", async (req, res, next) => {
   try {
-    const id = req.params.id;
-    const todoQuery = "update todo set state=0, reviewId=null where reviewId=?;";
-    await db.query(todoQuery, [id]);
-    const reviewQuery = "delete from review where id=?;";
-    await db.query(reviewQuery, [id]);
+    const id = parseInt(req.params.id);
+    await Todo.updateReviewByOne("reviewId", id, null);
+    await Review.deleteByOne("id", id);
     res.status(200).json({ id });
   } catch(err) {
     console.error(err);

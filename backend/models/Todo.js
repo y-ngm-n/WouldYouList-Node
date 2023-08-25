@@ -14,7 +14,7 @@ class Todo {
     "user": "user",
     "reviewId": "review"
   };
-  // object -> database
+  // database -> object
   static #prop = {
     "id": "id",
     "category": "category",
@@ -68,6 +68,13 @@ class Todo {
     try {
       const query = `update todo set state=? where ${this.#field[prop]}=?;`;
       await db.query(query, [state, value]);
+    } catch(err) { return err; }
+  }
+
+  static async updateReviewByOne(prop, value, reviewId) {
+    try {
+      const query = `update todo set review=? where ${this.#field[prop]}=?;`;
+      await db.query(query, [reviewId, value]);
     } catch(err) { return err; }
   }
 
